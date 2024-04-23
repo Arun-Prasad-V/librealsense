@@ -20,6 +20,8 @@
 #include <iostream>
 #include <chrono>
 
+//#include "/opt/intel/oneapi/vtune/2024.0/sdk/include/ittnotify.h"
+
 static const char* fragment_shader_text =
 "#version 110\n"
 "varying vec2 textCoords;\n"
@@ -162,6 +164,7 @@ namespace librealsense
         colorizer::colorizer() 
             : librealsense::colorizer("Depth Visualization (GLSL)"), _cm_texture(0)
         {
+            //_equalize = false;
             _fhist = std::vector<float>(MAX_DEPTH, 0);
             _fhist_data = _fhist.data();
             _source.add_extension<gpu_video_frame>(RS2_EXTENSION_VIDEO_FRAME_GL);
@@ -197,6 +200,14 @@ namespace librealsense
 
         rs2::frame colorizer::process_frame(const rs2::frame_source& src, const rs2::frame& f)
         {
+            //__itt_domain* domain3 = __itt_domain_create("MyLRSDomain");
+            char temp_name[15];
+            int temp_data[65536] = {0};
+
+            std::strcpy(temp_name,"LRS Colorizer"); 
+            //__itt_string_handle* task3 = __itt_string_handle_create(temp_name);
+            //__itt_task_begin(domain3, __itt_null, __itt_null, task3);
+
             if(f.as<rs2::depth_frame>())
                 _depth_units = ((depth_frame*)f.get())->get_units();
             if (f.get_profile().get() != _source_stream_profile.get())
@@ -252,11 +263,93 @@ namespace librealsense
 
                 uint32_t depth_texture;
                 uint32_t hist_texture = _cm_texture;
+                bool generate_hist_texture = false;
 
                 if (auto input_frame = f.as<rs2::gl::gpu_frame>())
                 {
                     depth_texture = input_frame.get_texture_id(0);
-                    hist_texture = input_frame.get_texture_id(1);
+                    try
+                    {
+                        hist_texture = input_frame.get_texture_id(1);
+
+                        
+
+                        glBindTexture(GL_TEXTURE_2D, hist_texture);
+		                glGetTexImage(GL_TEXTURE_2D, 0, GL_RED_INTEGER, GL_INT, temp_data);
+
+
+                    }
+                    catch(const std::exception& e)
+                    {
+                        std::cerr << "Arun: Error: " << e.what() << '\n';
+                        hist_texture = _cm_texture;
+                        generate_hist_texture = true;
+
+                        //throw std::runtime_error("Arun: Texture not ready!");
+                    }
+
+                    if (generate_hist_texture && _equalize)
+                    {
+                        /*uint8_t *cpu_data;
+                        cpu_data = new uint8_t[_width*_height*2];
+
+                        __itt_task_end(domain3);
+                        std::strcpy(temp_name,"LRS Colorizer1"); 
+                        task3 = __itt_string_handle_create(temp_name);
+                        __itt_task_begin(domain3, __itt_null, __itt_null, task3);
+
+                        glBindTexture(GL_TEXTURE_2D, depth_texture);
+
+                        //std::cout << "Arun: Before getting data to cpu" << std::endl;
+                        glGetTexImage(GL_TEXTURE_2D, 0, GL_RG, GL_UNSIGNED_BYTE, cpu_data);
+
+                        __itt_task_end(domain3);
+                        std::strcpy(temp_name,"LRS Colorizer2");
+                        task3 = __itt_string_handle_create(temp_name);
+                        __itt_task_begin(domain3, __itt_null, __itt_null, task3);*/
+
+                        std::cout << "Arun: Getting data to cpu" << std::endl;
+
+                        //__itt_task_end(domain3);
+                        std::strcpy(temp_name,"LRS Colorizer1"); 
+                        //task3 = __itt_string_handle_create(temp_name);
+                        //__itt_task_begin(domain3, __itt_null, __itt_null, task3);
+
+                        auto data = input_frame.get_data();
+
+                        //__itt_task_end(domain3);
+                        std::strcpy(temp_name,"LRS Colorizer2"); 
+                        //task3 = __itt_string_handle_create(temp_name);
+                        //__itt_task_begin(domain3, __itt_null, __itt_null, task3);
+
+                        glGenTextures(1, &hist_texture);
+                        glBindTexture(GL_TEXTURE_2D, hist_texture);
+
+                        if (disparity)
+                        {
+                            update_histogram(_hist_data, reinterpret_cast<const float*>(data), _width, _height);
+                            populate_floating_histogram(_fhist_data, _hist_data);
+                            glTexImage2D(GL_TEXTURE_2D, 0, GL_R32F, MAX_DISPARITY, 1, 0, GL_RED, GL_FLOAT, _fhist_data);
+                        }
+                        else
+                        {
+                            std::cout << "Arun: before update hist" << _width << " "<<_height << std::endl;
+                            update_histogram(_hist_data, reinterpret_cast<const uint16_t*>(data), _width, _height);
+                            std::cout << "Arun: after update hist" << std::endl;
+                            populate_floating_histogram(_fhist_data, _hist_data);
+                            std::cout << "Arun: after float" << std::endl;
+                            glTexImage2D(GL_TEXTURE_2D, 0, GL_R32F, 0xFF, 0xFF, 0, GL_RED, GL_FLOAT, _fhist_data);
+                        }
+
+                        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+                        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+
+                        //delete[] cpu_data;
+                        //__itt_task_end(domain3);
+                        std::strcpy(temp_name,"LRS Colorizer3"); 
+                        //task3 = __itt_string_handle_create(temp_name);
+                        //__itt_task_begin(domain3, __itt_null, __itt_null, task3);
+                    }
                 }
                 else
                 {
@@ -364,7 +457,11 @@ namespace librealsense
             [this]{
                 _enabled = false;
             }); 
-
+            for (int k = 0; k < 65536; k++)
+            {
+                //std::cout << "k: " << k << " value: " << temp_data[k] << std::endl;
+            }
+            //__itt_task_end(domain3);
             return res;
         }
     }

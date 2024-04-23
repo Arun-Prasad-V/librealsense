@@ -298,6 +298,7 @@ namespace librealsense
                     for (int i = 0; i < MAX_TEXTURES; i++)
                     if (textures[i] && loaded[i])
                     {
+                        std::cout << "Arun: What is the texture " << types[i] << std::endl;
                         auto& vis = get_texture_visualizer();
                         //rs2::visualizer_2d vis;
                         rs2::fbo fbo(width, height);

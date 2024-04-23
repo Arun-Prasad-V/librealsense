@@ -57,7 +57,7 @@ include(include/CMakeLists.txt)
 include(src/CMakeLists.txt)
 include(third-party/CMakeLists.txt)
 
-target_link_libraries( ${LRS_TARGET} PUBLIC rsutils )
+target_link_libraries( ${LRS_TARGET} PUBLIC rsutils /opt/intel/oneapi/vtune/2024.0/sdk/lib64/libittnotify.a)
 
 if(BUILD_WITH_DDS)
     if (CMAKE_SYSTEM MATCHES "Windows" OR CMAKE_SYSTEM MATCHES "Linux")

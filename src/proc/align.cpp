@@ -201,6 +201,7 @@ namespace librealsense
         auto set = frame.as<rs2::frameset>();
         if (!set)
             return false;
+        LOG_DEBUG("Arun:Align: should process? " << set.size());
 
         auto profile = frame.get_profile();
         rs2_stream stream = profile.stream_type();
@@ -214,6 +215,8 @@ namespace librealsense
             { if (frame.get_profile().stream_type() == RS2_STREAM_DEPTH && frame.get_profile().format() == RS2_FORMAT_Z16) has_depth = true; });
         if (!has_tex || !has_depth)
             return false;
+        else
+            LOG_DEBUG("Arun:Align: has both tex and depth");
 
         return true;
     }

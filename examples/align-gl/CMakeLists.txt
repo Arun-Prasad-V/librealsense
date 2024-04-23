@@ -7,6 +7,7 @@ project(RealsenseExamplesAlignGl )
 
 # Save the command line compile commands in the build output
 set(CMAKE_EXPORT_COMPILE_COMMANDS 1)
+set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} -Wl,-z,stack-size=20000000")
 
 if(BUILD_GRAPHICAL_EXAMPLES AND NOT APPLE)
     add_executable(rs-align-gl rs-align-gl.cpp ../../third-party/imgui/imgui.cpp ../../third-party/imgui/imgui_draw.cpp ../../third-party/imgui/imgui_impl_glfw.cpp)

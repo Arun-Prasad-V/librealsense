@@ -5,6 +5,7 @@
 #include "example-imgui.hpp"
 #include <librealsense2-gl/rs_processing_gl.hpp> // Include GPU-Processing API
 
+#pragma comment(linker, "/STACK:838860800")
 
 /*
  This example introduces the concept of spatial stream alignment.
@@ -35,6 +36,7 @@ void render_slider(rect location, float* alpha, direction* dir);
 
 int main(int argc, char * argv[]) try
 {   
+    rs2::log_to_console( RS2_LOG_SEVERITY_DEBUG );
     std::string serial;
     if (!device_with_streams({ RS2_STREAM_COLOR,RS2_STREAM_DEPTH }, serial))
         return EXIT_SUCCESS;
@@ -71,14 +73,47 @@ int main(int argc, char * argv[]) try
     // that should not be performed in the main loop
     rs2::gl::align align_to_depth(RS2_STREAM_DEPTH);
     rs2::gl::align align_to_color(RS2_STREAM_COLOR);
+    rs2::gl::pointcloud pc;
+    rs2::gl::uploader upload;
 
     float       alpha = 0.5f;               // Transparancy coefficient
-    direction   dir = direction::to_depth;  // Alignment direction
+    direction   dir = direction::to_color;  // Alignment direction
 
     while (app) // Application still alive?
     {
         // Using the align object, we block the application until a frameset is available
         rs2::frameset frameset = pipe.wait_for_frames();
+
+        std::cout << "Raw frameset: size: " << frameset.size() << std::endl;
+        for (auto frame : frameset)
+        {
+            if(frame.is<rs2::gl::gpu_frame>())
+                std::cout << frame.get_profile().stream_type() << " " << frame.get_profile().format() << " Yes" << std::endl;
+            else
+                std::cout << frame.get_profile().stream_type() << " " << frame.get_profile().format() << " No" << std::endl;
+        }
+        
+        /*frameset = c.process(frameset);
+        std::cout << "After colorizer frameset: size: " << frameset.size() << std::endl;
+
+        for (auto frame : frameset)
+        {
+            if(frame.is<rs2::gl::gpu_frame>())
+                std::cout << frame.get_profile().stream_type() << " " << frame.get_profile().format() << " Yes" << std::endl;
+            else
+                std::cout << frame.get_profile().stream_type() << " " << frame.get_profile().format() << " No" << std::endl;
+        }
+    
+        frameset = pc.process(frameset);
+        std::cout << "After PC frameset: size: " << frameset.size() << std::endl;
+
+        for (auto frame : frameset)
+        {
+            if(frame.is<rs2::gl::gpu_frame>())
+                std::cout << frame.get_profile().stream_type() << " " << frame.get_profile().format() << " Yes" << std::endl;
+            else
+                std::cout << frame.get_profile().stream_type() << " " << frame.get_profile().format() << " No" << std::endl;
+        }*/
 
         if (dir == direction::to_depth)
         {
@@ -90,11 +125,29 @@ int main(int argc, char * argv[]) try
             // Align all frames to color viewport
             frameset = align_to_color.process(frameset);
         }
+        std::cout << "After Align frameset: size: " << frameset.size() << std::endl;
+        for (auto frame : frameset)
+        {
+            if(frame.is<rs2::gl::gpu_frame>())
+            {
+                std::cout << frame.get_profile().stream_type() << " " << frame.get_profile().format() << " Yes" << std::endl;
+                auto gpu_frame = frame.as<rs2::gl::gpu_frame>();
+                auto texture_id = gpu_frame.get_texture_id(0);
+                //auto hist_texture_id = gpu_frame.get_texture_id(1);
+            }
+            else
+                std::cout << frame.get_profile().stream_type() << " " << frame.get_profile().format() << " No" << std::endl;
+        }
+        std::cout << "Arun: Depth Process done" <<std::endl;
+
+        frameset = c.process(frameset);
+        std::cout << "Arun: Colorizer Process done" <<std::endl;
+
         // With the aligned frameset we proceed as usual
-        auto depth = frameset.get_depth_frame();
+        auto colorized_depth = frameset.first(RS2_STREAM_DEPTH);
         auto color = frameset.get_color_frame();
 
-        auto colorized_depth = c.colorize(depth);
+        //auto colorized_depth = c.colorize(depth);
 
         glEnable(GL_BLEND);
         // Use the Alpha channel for blending
