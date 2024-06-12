@@ -611,7 +611,11 @@ jobs:
 
   #--------------------------------------------------------------------------------
   U24_SH_RSUSB_LiveTest:  # Ubuntu 2024, Shared, Legacy live-tests
-    runs-on: ubuntu-24.04
+    runs-on: ${{ matrix.os }}
+    strategy:
+      matrix:
+        os: [ubuntu-22.04, ubuntu-24.04]
+    name: Build on ${{ matrix.os }}
     timeout-minutes: 60
     env: 
       LRS_BUILD_NODEJS: true
