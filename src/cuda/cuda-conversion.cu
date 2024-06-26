@@ -398,6 +398,12 @@ void rscuda::y16_y16_from_y12i_10_cuda_helper(uint8_t* const dest[], int count, 
     */
 }
 
+template<class rscuda::y12i_pixel>
+void rscuda::y16_y16_from_y12i_10_cuda_helper(uint8_t* const dest[], int count, const rscuda::y12i_pixel * source);
+
+
+template<class rscuda::y12i_pixel_mipi>
+void rscuda::y16_y16_from_y12i_10_cuda_helper(uint8_t* const dest[], int count, const rscuda::y12i_pixel_mipi * source);
 
 __global__ void kernel_z16_y8_from_sr300_inzi_cuda(const uint16_t* source, uint8_t* const dest, int count)
 {
