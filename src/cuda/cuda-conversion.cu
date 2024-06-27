@@ -355,7 +355,7 @@ __global__ void kernel_split_frame_y16_y16_from_y12i_cuda(uint16_t* a, uint16_t*
 }
 
 
-template<class SOURCE>
+//template<class SOURCE>
 void rscuda::y16_y16_from_y12i_10_cuda_helper(uint8_t* const dest[], int count, const SOURCE * source)
 {
     /*
