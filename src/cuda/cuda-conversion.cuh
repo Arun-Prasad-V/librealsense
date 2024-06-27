@@ -47,7 +47,7 @@ namespace rscuda
     
     template<class SOURCE> void split_frame_y16_y16_from_y12i_cuda(uint8_t* const dest[], int count, const SOURCE * source)
     {
-        y16_y16_from_y12i_10_cuda_helper(dest, count, reinterpret_cast<const SOURCE*>(source));
+        y16_y16_from_y12i_10_cuda_helper<SOURCE>(dest, count, reinterpret_cast<const SOURCE*>(source));
     }
     
     void unpack_z16_y8_from_sr300_inzi_cuda(uint8_t* const dest, const uint16_t* source, int count);
